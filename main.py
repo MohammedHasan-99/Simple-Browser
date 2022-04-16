@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import *
 import sys
+import validators
 
 BROWSER_NAME = "My hacker Browser"
 DEFAULT_URL = "http://google.com"
@@ -10,6 +11,7 @@ HOME_PAGE = "http://google.com"
 BAR_SIZE = 40
 URL_FONT = QFont("Times", 10, QFont.Bold)
 BTN_FONT = QFont("Times", 10)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -22,8 +24,8 @@ class MainWindow(QMainWindow):
         self.browser.loadFinished.connect(self.update_title)
         self.setCentralWidget(self.browser)
 
-        # self.statusBar = QStatusBar()
-        # self.setStatusBar(self.statusBar)
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
 
         # Navigation
         navbar = QToolBar("Navigation")
@@ -98,20 +100,28 @@ class MainWindow(QMainWindow):
         self.showMaximized()
 
     def update_title(self):
+        self.statusBar.showMessage("Done loading...")
         page_title = self.browser.page().title()
         self.setWindowTitle(f"{BROWSER_NAME} - {page_title}")
 
     def navigate_home(self):
+        self.statusBar.showMessage("Loading...")
         self.cb.setCurrentIndex(0)
         self.browser.setUrl(QUrl(HOME_PAGE))
 
     def navigate_to_url(self):
+        self.statusBar.showMessage("Loading...")
         self.cb.setCurrentIndex(0)
+        url = self.url_bar.text()
+        q_url = QUrl(self.url_bar.text())
+        if q_url.scheme() == "":
+            q_url.setScheme("http")
+            url = f"http://{url}"
 
-        url = QUrl(self.url_bar.text())
-        if url.scheme() == "":
-            url.setScheme("http")
-        self.browser.setUrl(url)
+        if validators.url(url):
+            self.browser.setUrl(q_url)
+        else:
+            self.browser.setUrl(QUrl(f"http://www.google.com/search?q={self.url_bar.text()}"))
 
     def update_url_bar(self, url):
         self.url_bar.setText(url.toString())
@@ -120,6 +130,7 @@ class MainWindow(QMainWindow):
     def selection_change(self):
         url = self.bookmarks[self.cb.currentText()]
         if url != "":
+            self.statusBar.showMessage("Loading...")
             self.browser.setUrl(QUrl(url))
 
     def add_bookmark(self):
